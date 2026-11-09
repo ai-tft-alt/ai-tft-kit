@@ -1,0 +1,12 @@
+// 직원 3명 동시 투입 (worktree 3개). 폴더 이름은 내 프로젝트에 맞게 바꾸세요.
+layout {
+  pane size=1 borderless=true { plugin location="tab-bar"; }
+  pane split_direction="vertical" {
+    pane command="claude" cwd="C:/ai_tft/test51-a" name="직원 A"
+    pane split_direction="horizontal" {
+      pane command="claude" cwd="C:/ai_tft/test51-b" name="직원 B"
+      pane command="claude" cwd="C:/ai_tft/test51-c" name="직원 C"
+    }
+  }
+  pane size=2 borderless=true { plugin location="status-bar"; }
+}

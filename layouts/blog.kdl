@@ -1,0 +1,12 @@
+// 블로그 실습 화면: 위 Claude CLI / 아래 개발 서버 + PowerShell
+layout {
+  pane size=1 borderless=true { plugin location="tab-bar"; }
+  pane split_direction="horizontal" {
+    pane command="claude" cwd="C:/ai_tft/blog51" name="Claude CLI" size="60%"
+    pane split_direction="vertical" {
+      pane command="powershell" cwd="C:/ai_tft/blog51" name="pnpm dev" { args "-NoExit" "-Command" "pnpm dev"; }
+      pane command="powershell" cwd="C:/ai_tft/blog51" name="PowerShell"
+    }
+  }
+  pane size=2 borderless=true { plugin location="status-bar"; }
+}

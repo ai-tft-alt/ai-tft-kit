@@ -1,0 +1,23 @@
+layout {
+  pane split_direction="vertical" {
+    pane split_direction="horizontal" {
+      pane command="claude" name="1 안내 웹페이지" {
+        args "--permission-mode" "acceptEdits" \
+          "index.html 로 AI 교육 설명회 안내 페이지를 만들어줘"
+      }
+      pane command="claude" name="2 신청자 통계" {
+        args "--permission-mode" "acceptEdits" \
+          "신청자 30명 applicants.csv 와 부서별 통계 stats.md 를 만들어줘"
+      }
+    }
+    pane split_direction="horizontal" {
+      pane command="claude" name="3 안내 메일·FAQ" {
+        args "--permission-mode" "acceptEdits" \
+          "설명회 안내 메일 mail.md 와 FAQ 10개 faq.md 를 만들어줘"
+      }
+      pane command="npx" name="4 미리보기" {
+        args "--yes" "serve" "-l" "8000"
+      }
+    }
+  }
+}
