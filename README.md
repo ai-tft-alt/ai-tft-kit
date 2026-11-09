@@ -20,6 +20,23 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -Project C:\ai_tft\kit51 
 
 설치 후 Claude를 새로 실행하면 스킬이 보입니다.
 
+### VS Code 터미널 설정 (권장)
+
+VS Code 터미널 안에서 Zellij를 쓸 때 단축키가 먹지 않거나, **화살표는 되는데 ESC만 안 먹는** 경우(Windows 10)가 있습니다.
+`-VSCode` 옵션을 붙이면 `%APPDATA%\Code\User\settings.json`에 아래 3줄을 추가합니다(이미 있는 줄은 건너뛰고, 원본은 `settings.json.bak`으로 백업).
+
+```json
+"terminal.integrated.sendKeybindingsToShell": true,
+"terminal.integrated.defaultProfile.windows": "PowerShell",
+"terminal.integrated.windowsUseConptyDll": true
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -VSCode
+```
+
+추가한 뒤 VS Code 터미널을 닫았다가 새로 열면 적용됩니다.
+
 ## 들어 있는 것
 
 | 구분 | 이름 | 하는 일 |

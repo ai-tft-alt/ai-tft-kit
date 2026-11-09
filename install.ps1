@@ -4,12 +4,13 @@ AI-TFT 스타터 키트 설치 (Windows PowerShell 5.1 이상)
   .\install.ps1                                   키트 설치 (스킬 · CLI · 레이아웃)
   .\install.ps1 -Project C:\ai_tft\kit51          + 그 폴더에 CLAUDE.md 템플릿
   .\install.ps1 -Project C:\ai_tft\kit51 -Learning   + 그 폴더에만 학습 모드 훅 켜기
+  .\install.ps1 -VSCode                           VS Code 터미널 설정 3줄 추가 (Zellij 단축키 · ESC 문제 해결)
   .\install.ps1 -Force                            같은 이름 스킬이 있어도 덮어쓰기
   .\install.ps1 -Uninstall                        키트 스킬과 파일 지우기
 
 전역 설정(%USERPROFILE%\.claude\settings.json)은 건드리지 않습니다. 훅은 -Project 폴더에만 켭니다.
 #>
-param([string]$Project = "", [switch]$Learning, [switch]$Force, [switch]$Uninstall)
+param([string]$Project = "", [switch]$Learning, [switch]$VSCode, [switch]$Force, [switch]$Uninstall)
 $ErrorActionPreference = "Stop"
 $Kit = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Home2 = Join-Path $env:USERPROFILE ".ai-tft-kit"
@@ -70,6 +71,34 @@ if ($Project) {
   }
 }
 
-# 5) 점검
+# 5) VS Code 터미널 설정 (선택, -VSCode)
+#    sendKeybindingsToShell : Zellij 단축키(Ctrl+p 등)를 VS Code가 가로채지 않게
+#    defaultProfile         : 터미널을 PowerShell로 통일
+#    windowsUseConptyDll    : Windows 10에서 VS Code 안 Zellij의 ESC가 안 먹는 문제 해결
+if ($VSCode) {
+  $vs = Join-Path $env:APPDATA "Code\User\settings.json"
+  New-Item -ItemType Directory -Force (Split-Path $vs) | Out-Null
+  $want = [ordered]@{
+    "terminal.integrated.sendKeybindingsToShell" = "true"
+    "terminal.integrated.defaultProfile.windows" = '"PowerShell"'
+    "terminal.integrated.windowsUseConptyDll"    = "true"
+  }
+  $txt = if (Test-Path $vs) { Get-Content $vs -Raw -Encoding UTF8 } else { "{`n}" }
+  if (-not $txt.Trim()) { $txt = "{`n}" }
+  $add = @($want.Keys | Where-Object { $txt -notmatch [regex]::Escape("`"$_`"") })
+  if ($add.Count -eq 0) { Say "  VS Code 설정: 이미 있음" Gray }
+  else {
+    if (Test-Path $vs) { Copy-Item $vs "$vs.bak" -Force }
+    $lines = ($add | ForEach-Object { "    `"$_`": $($want[$_])" }) -join ",`n"
+    $i = $txt.LastIndexOf("}")
+    $head = $txt.Substring(0, $i).TrimEnd()
+    if (-not ($head.EndsWith("{") -or $head.EndsWith(","))) { $head += "," }
+    $txt = $head + "`n" + $lines + "`n}" + $txt.Substring($i + 1)
+    [IO.File]::WriteAllText($vs, $txt, (New-Object Text.UTF8Encoding $false))
+    Say "  VS Code 설정 추가: $($add -join ', ')  (백업: settings.json.bak, 터미널을 새로 열면 적용)" Green
+  }
+}
+
+# 6) 점검
 python (Join-Path $Home2 "cli\hwp.py") check
 Say "== 설치 완료. Claude를 새로 실행한 뒤 /skills 또는 '설치된 tft 스킬 보여줘' 로 확인하세요 ==" Cyan
