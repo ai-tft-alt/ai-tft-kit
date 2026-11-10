@@ -37,6 +37,10 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -VSCode
 
 추가한 뒤 VS Code 터미널을 닫았다가 새로 열면 적용됩니다.
 
+같은 옵션으로 **Zellij 중복 실행 방지**도 PowerShell 프로필(`Documents\WindowsPowerShell\profile.ps1`)에 넣습니다.
+Zellij 칸 안에서 `zellij`를 또 입력하면 실행하지 않고 안내만 띄웁니다. 두 겹이 되면 ESC가 다시 안 먹고, 맨 위 탭 줄과 맨 아래 단축키 줄이 2줄씩 보입니다.
+`zellij ls`, `zellij action …` 같은 관리 명령은 그대로 됩니다. 꼭 겹쳐 켜야 하면 `zellij.exe`로 직접 실행하세요.
+
 ## 들어 있는 것
 
 | 구분 | 이름 | 하는 일 |

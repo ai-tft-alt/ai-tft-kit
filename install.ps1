@@ -4,7 +4,7 @@ AI-TFT 스타터 키트 설치 (Windows PowerShell 5.1 이상)
   .\install.ps1                                   키트 설치 (스킬 · CLI · 레이아웃)
   .\install.ps1 -Project C:\ai_tft\kit51          + 그 폴더에 CLAUDE.md 템플릿
   .\install.ps1 -Project C:\ai_tft\kit51 -Learning   + 그 폴더에만 학습 모드 훅 켜기
-  .\install.ps1 -VSCode                           VS Code 터미널 설정 3줄 추가 (Zellij 단축키 · ESC 문제 해결)
+  .\install.ps1 -VSCode                           VS Code 터미널 설정 3줄 + Zellij 중복 실행 방지 (단축키 · ESC 문제 해결)
   .\install.ps1 -Force                            같은 이름 스킬이 있어도 덮어쓰기
   .\install.ps1 -Uninstall                        키트 스킬과 파일 지우기
 
@@ -22,6 +22,12 @@ if ($Uninstall) {
     $t = Join-Path $SkillDir $_.Name; if (Test-Path $t) { Remove-Item $t -Recurse -Force; Say "삭제: 스킬 $($_.Name)" }
   }
   if (Test-Path $Home2) { Remove-Item $Home2 -Recurse -Force; Say "삭제: $Home2" }
+  $pf = $PROFILE.CurrentUserAllHosts
+  if (Test-Path $pf) {
+    $old = Get-Content $pf -Raw
+    $new = [regex]::Replace($old, '(?s)\r?\n?# >>> ai-tft zellij guard >>>.*?# <<< ai-tft zellij guard <<<\r?\n?', '')
+    if ($new -ne $old) { [IO.File]::WriteAllText($pf, $new, (New-Object Text.UTF8Encoding $true)); Say "삭제: Zellij 중복 실행 방지 ($pf)" }
+  }
   Say "제거 완료 (프로젝트 폴더의 .claude\settings.json 훅은 직접 지우세요)" Green; return
 }
 
@@ -97,6 +103,36 @@ if ($VSCode) {
     [IO.File]::WriteAllText($vs, $txt, (New-Object Text.UTF8Encoding $false))
     Say "  VS Code 설정 추가: $($add -join ', ')  (백업: settings.json.bak, 터미널을 새로 열면 적용)" Green
   }
+
+  # Zellij 중복 실행 방지: Zellij 칸 안(ZELLIJ 환경변수가 있음)에서 zellij 를 또 켜면 막고 안내
+  #   (두 겹이 되면 ESC 가 안 먹고 탭 줄·단축키 줄이 2줄씩 보임)
+  #   action · list-sessions · kill-session 같은 관리 명령은 그대로 통과
+  $pf = $PROFILE.CurrentUserAllHosts
+  New-Item -ItemType Directory -Force (Split-Path $pf) | Out-Null
+  $guard = @'
+# >>> ai-tft zellij guard >>>
+function zellij {
+  $ok = 'action','list-sessions','ls','kill-session','k','kill-all-sessions','ka','delete-session','d',
+        'delete-all-sessions','da','run','r','edit','e','plugin','pipe','setup','-h','--help','-V','--version'
+  if ($env:ZELLIJ -and -not ($args.Count -gt 0 -and $ok -contains $args[0])) {
+    Write-Host "이미 Zellij 안입니다 (세션: $env:ZELLIJ_SESSION_NAME)." -ForegroundColor Yellow
+    Write-Host "  zellij 를 또 켜면 두 겹이 되어 ESC 가 안 먹습니다. 새 칸은 Alt + n 을 쓰세요." -ForegroundColor Yellow
+    Write-Host "  다른 레이아웃을 쓰려면 Ctrl + q 로 나간 뒤 다시 실행하세요." -ForegroundColor Yellow
+    return
+  }
+  zellij.exe @args
+}
+# <<< ai-tft zellij guard <<<
+'@
+  $old = if (Test-Path $pf) { Get-Content $pf -Raw } else { "" }
+  if ($null -eq $old) { $old = "" }
+  $new = [regex]::Replace($old, '(?s)# >>> ai-tft zellij guard >>>.*?# <<< ai-tft zellij guard <<<\r?\n?', '')
+  $new = $new.TrimEnd() + $(if ($new.Trim()) { "`r`n`r`n" } else { "" }) + ($guard -replace "`r?`n", "`r`n") + "`r`n"
+  if ($new -ne $old) {
+    if (Test-Path $pf) { Copy-Item $pf "$pf.bak" -Force }
+    [IO.File]::WriteAllText($pf, $new, (New-Object Text.UTF8Encoding $true))   # BOM: PowerShell 5.1 한글 깨짐 방지
+    Say "  Zellij 중복 실행 방지 추가 → $pf  (PowerShell 을 새로 열면 적용)" Green
+  } else { Say "  Zellij 중복 실행 방지: 이미 있음" Gray }
 }
 
 # 6) 점검
